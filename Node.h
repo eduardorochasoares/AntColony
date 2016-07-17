@@ -9,7 +9,7 @@ class Node{
         void setX(double x);
         void setY(double y);
         void setDemand(double demand);
-        Node(double x, double y, double demand);
+        Node();
         double getX();
         double getY();
         double getDemand();

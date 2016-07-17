@@ -4,8 +4,7 @@
 #define beta 0.2
 #include <math.h>
 
-Ant::Ant(int n){
-    this->n = n;
+Ant::Ant(){
     this->objectiveFunction = 0;
 
 }
@@ -27,4 +26,8 @@ Ant::~Ant()
 double Ant::getObjectiveFunction()
 {
     return this->objectiveFunction;
+}
+
+void Ant::setPath(std::vector<int> path){
+    this->tour = path;
 }

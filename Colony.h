@@ -16,18 +16,25 @@ class Colony{
         int hotels_number;
         int costumer_number;
         int points_number;
+        double limit;
         Edges** edges;
         double** pheromone;
-        std::list<Node*> points;
-        std::list<Node*> hotels;
-        std::list<Node*> costumers;
+        Node** points;
+        Node** hotels;
+        Node** costumers;
+        void resetPaths();
+        void cleanEdges();
+        void normalize(Ant* ant);
+        int verifyHotel(double cost, int i, int j);
     public:
-        Colony();
+        Colony(int population_size);
         ~Colony();
         void readInstance();
         void UpdatePheromone();
         Ant* findBestAnt();
         int chooseEdge(int i);
+        void firstConstruction();
+        void constructSolution();
 
 };
 

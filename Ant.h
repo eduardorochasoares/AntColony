@@ -6,13 +6,13 @@ class Ant{
     private:
         std::vector<int> tour;
         double objectiveFunction;
-        int n;
   public:
-      Ant(int n);
+      Ant();
       ~Ant();
       std::vector<int>& getTour();
       void setObjectiveFunction(double value);
       double getObjectiveFunction();
+      void setPath(std::vector<int> path);
 
 
 

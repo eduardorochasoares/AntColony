@@ -23,8 +23,9 @@ double Node::getY()
 {
     return this->y;
 }
-Node::Node(double x, double y, double demand){
-    this->x = x;
-    this->y = y;
-    this->demand = demand;
+Node::Node(){
+
+}
+double Node::getDemand(){
+    return this->demand;
 }

@@ -12,6 +12,7 @@
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Compiler>
+					<Add option="-std=c++11" />
 					<Add option="-g" />
 				</Compiler>
 			</Target>
@@ -36,6 +37,8 @@
 		<Unit filename="Ant.h" />
 		<Unit filename="Colony.cpp" />
 		<Unit filename="Colony.h" />
+		<Unit filename="Node.cpp" />
+		<Unit filename="Node.h" />
 		<Unit filename="main.cpp" />
 		<Extensions>
 			<code_completion />
