@@ -1,18 +1,22 @@
 #ifndef COLONY_H_INCLUDED
 #define COLONY_H_INCLUDED
 #include "Ant.h"
+#include "Node.h"
+#include <list>
 class Colony{
     private:
-        typedef struct node{
-            double x, y, demand;
+        typedef struct prob{
+            double probability;
+            double distance;
             bool visited;
-        }Node;
+        }Edges;
+
         Ant** ants;
         int population_size;
         int hotels_number;
         int costumer_number;
         int points_number;
-        double** distance;
+        Edges** edges;
         double** pheromone;
         std::list<Node*> points;
         std::list<Node*> hotels;
@@ -21,6 +25,10 @@ class Colony{
         Colony();
         ~Colony();
         void readInstance();
+        void UpdatePheromone();
+        Ant* findBestAnt();
+        int chooseEdge(int i);
+
 };
 
 

@@ -11,7 +11,7 @@ Ant::Ant(int n){
 }
 
 
-std::list<int>& Ant::getTour(){
+std::vector<int>& Ant::getTour(){
     return this->tour;
 }
 
@@ -19,11 +19,12 @@ void Ant::setObjectiveFunction(double val){
     this->objectiveFunction = val;
 }
 
-double Ant::getObjectiveFunction(){
-    return this->objectiveFunction;
-}
 
 Ant::~Ant()
 {
 
+}
+double Ant::getObjectiveFunction()
+{
+    return this->objectiveFunction;
 }
