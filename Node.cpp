@@ -29,3 +29,11 @@ Node::Node(){
 double Node::getDemand(){
     return this->demand;
 }
+
+int Node::getIndex(){
+    return this->index;
+}
+
+void Node::setIndex(int index){
+    this->index = index;
+}

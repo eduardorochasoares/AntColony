@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <climits>
 #include <iostream>
+#include "LKMatrix.h"
 #define p 0.4
 #define mi 50
 #define phi 2
@@ -28,18 +29,23 @@ Colony::Colony(int population_size)
    }
 
    for(int i = 0 ; i < points_number; ++i)
-      for(int j = 0; j < points_number; ++j)
+      for(int j = 0; j < points_number; ++j){
           this->edges[i][j].visited = false;
+          this->edges[i][j].probability = 0;
+      }
 
     this->ants = new Ant*[population_size];
     for(int i = 0; i < population_size; ++i)
         this->ants[i] = new Ant();
 
-    for(int i = 0; i < points_number; ++i)
+    for(int i = 0; i < points_number; ++i){
         for(int j = 0; j < points_number; ++j){
             edges[i][j].distance = sqrt(pow(points[i]->getX() - points[j]->getX(), 2) +
             pow(points[i]->getY() - points[j]->getY(), 2));
+          // std::cout<<edges[i][j].distance<<" ";
         }
+        //std::cout<<"\n";
+    }
 
     firstConstruction();
 }
@@ -79,27 +85,34 @@ void Colony::readInstance()
         points[i] = new Node();
 
     double x, y, demand;
+    int index;
     for(int i  = 0; i < (hotels_number + costumer_number); ++i){
         if(i < hotels_number){
+            file>>index;
             file>>x;
             file>>y;
             demand = 0;
             node = new Node();
+            node->setIndex(index);
             node->setX(x);
             node->setY(y);
             node->setDemand(demand);
             hotels[i] =  node;
         }else{
+            file>>index;
             file>>x;
             file>>y;
             file>>demand;
             node = new Node();
             node->setX(x);
             node->setY(y);
+            node->setIndex(index);
             node->setDemand(demand);
             costumers[i - hotels_number] = node;
         }
         points[i] = node;
+
+        std::cout<<"node "<<i<<" X: "<<node->getX()<<" Y: "<<node->getY()<<std::endl;
 
     }
 
@@ -117,6 +130,7 @@ void Colony::UpdatePheromone()
         pheromone[tour.at(i)][tour.at(i+1)] = pheromone[tour.at(i)][tour.at(i+1)] * (1 - p);
         //deposita feromonio
         pheromone[tour.at(i)][tour.at(i+1)] = pheromone[tour.at(i)][tour.at(i+1)] + mi* (1/ant->getObjectiveFunction());
+        pheromone[tour.at(i + 1)][tour.at(i)] = pheromone[tour.at(i)][tour.at(i+1)];
     }
 
     //atualizacao de feromonio das demais formigas
@@ -130,6 +144,7 @@ void Colony::UpdatePheromone()
                 //std::cout<<j<<std::endl;
                 pheromone[tour.at(j)][tour.at(j+1)] = pheromone[tour.at(j)][tour.at(j+1)] * (1 - p)
                     + phi*(1/ants[i]->getObjectiveFunction());
+                pheromone[tour.at(j+1)][tour.at(j)] = pheromone[tour.at(j)][tour.at(j+1)];
             }
         }
     }
@@ -174,25 +189,44 @@ Ant* Colony::findBestAnt(){
 
 int Colony::chooseEdge(int i)
 {
-    std::list<int> l;
     double sum = 0;
+
+    std::list<int> l;
+
     for(int j = 0; j < points_number; ++j){
-        if(!edges[i][j].visited && i != j)
+        if(!edges[i][j].visited && i != j && edges[i][j].distance != 0){
+            std::cout<<"parcial sum: "<<sum<<std::endl;
+
             sum += pow(pheromone[i][j], alfa) * pow(1/(edges[i][j].distance), beta);
+        }
     }
+    std::cout<<"sum: "<<sum<<std::endl;
+
     for(int j = 0; j < points_number; ++j){
         if(!edges[i][j].visited && i != j){
             edges[i][j].probability = pow(pheromone[i][j], alfa) * pow(1/(edges[i][j].distance), beta) / sum;
-            l.push_back(j);
+            std::cout<<"Prob Edge ("<<i<<" "<<j<<") : "<<edges[i][j].probability<<std::endl;
+
+            if(edges[i][j].probability != 0){
+                l.push_back(j);
+                std::cout<<j<<std::endl;
+            }
         }
     }
-    int number = rand()%100;
-    int index = 0;
+    int number = rand()%10000;
+    double index = 0;
+    int j;
+    std::cout<<"number: "<<number<<std::endl;
+    if(l.size() == 0) return 0;
     for(auto it = l.begin(); it != l.end(); ++it){
-        if(number >= index || number < (edges[i][*it].probability)*100){
-            return *it;
+        j = *it;
+        if(number >= index && number < ((edges[i][j].probability)*10000  + index)){
+            std::cout<<"biirl :"<<j<<std::endl;
+            edges[i][j].visited = true;
+            edges[j][i].visited = true;
+            return j;
         }
-        index += (edges[i][*it].probability)*100;
+        index += (edges[i][j].probability)*10000;
     }
     return -1;
 
@@ -201,11 +235,18 @@ int Colony::chooseEdge(int i)
 void Colony::firstConstruction(){
     Ant* current;
     int count = 0;
+    vector<int> id;
+    vector<pair<double,double>> coord;
+    for(int i = hn ; i < points_number; ++i){
+        id.push_back(i);
+        coord.push_back(make_pair(points[i]->getX(), points[i]->getY()));
+    }
+    LKMatrix mat(coord, id);
     int currentNode = 0;
     for(int i = 0; i < population_size; ++i){
         currentNode = 0;
         current = ants[i];
-        count = 0;
+        /*count = 0;
         current->getTour().push_back(0);
         while(count < costumer_number){
             currentNode = rand() % (costumer_number) + hotels_number;
@@ -213,12 +254,13 @@ void Colony::firstConstruction(){
                 current->getTour().push_back(currentNode);
                 count++;
             }
-        }
+        }*/
         //std::cout<<"ANT Number "<<i<<std::endl;
         normalize(ants[i]);
     }
     UpdatePheromone();
     resetPaths();
+    constructSolution();
 
 }
 
