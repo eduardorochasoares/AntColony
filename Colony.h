@@ -37,6 +37,7 @@ class Colony{
         int chooseEdge(int i);
         void firstConstruction();
         void constructSolution();
+        void cheapestInsertion(Ant* ant);
 
 };
 

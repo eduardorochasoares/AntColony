@@ -177,12 +177,16 @@ Ant* Colony::findBestAnt(){
         sum = 0;
         tour = ants[i]->getTour();
 
-        for(int j = 0; j < tour.size() - 1; ++j){
-            if(j >= hotels_number){
+        for(int j = 0; j < tour.size(); ++j){
+            if(tour[j] >= hotels_number){
                 sum+= points[j]->getDemand();
             }
-            sum+= edges[tour.at(j)][tour.at(j + 1)].distance;
+            if(j < tour.size() - 1)
+                sum+= edges[tour.at(j)][tour.at(j + 1)].distance;
+            else
+                sum+= edges[tour.at(0)][tour.at(j)].distance;
         }
+
         ants[i]->setObjectiveFunction(sum);
         if(sum < best){
             best = sum;
@@ -190,7 +194,7 @@ Ant* Colony::findBestAnt(){
         }
     }
     bestSolutions.push_back(bestAnt->getObjectiveFunction());
-    std::cout<<"Best SOlution: "<<bestAnt->getObjectiveFunction();
+    std::cout<<"Best Solution: "<<bestAnt->getObjectiveFunction()<<std::endl;
     return bestAnt;
 }
 
@@ -205,7 +209,6 @@ int Colony::chooseEdge(int i)
             if(edges[i][j].distance == 0){
                 edges[i][j].visited = true;
                 edges[j][i].visited = true;
-                std::cout<<"baaaaiirl"<<std::endl;
                 return j;
             }
             //std::cout<<"parcial sum: "<<sum<<std::endl;
@@ -235,7 +238,6 @@ int Colony::chooseEdge(int i)
     for(auto it = l.begin(); it != l.end(); ++it){
         j = *it;
         if(number >= index && number < ((edges[i][j].probability)*10000  + index)){
-            //std::cout<<"biirl :"<<j<<std::endl;
             edges[i][j].visited = true;
             edges[j][i].visited = true;
 
@@ -262,7 +264,7 @@ void Colony::firstConstruction(){
     for(int i = 0; i < population_size; ++i){
         currentNode = 0;
         current = ants[i];
-        int cont = 0;
+
         if(i == 0){
         current->setTour(mat.optimizeTour());
             for(auto it = ants[i]->getTour().begin(); it != ants[i]->getTour().end(); ++it){
@@ -280,13 +282,16 @@ void Colony::firstConstruction(){
                     count++;
                 }
             }
+
         }
+
         //std::cout<<"ANT Number "<<i<<std::endl;
         //normalize(ants[i]);
         for(int j = 0; j < ants[i]->getTour().size(); ++j)
             std::cout<<ants[i]->getTour().at(j)<< " "<<std::endl;
     }
-    int runs = 10000;
+    //cheapestInsertion(ants[1]);
+
     int num = 0;
     int iterations = 0;
     while(num < RUNS){
@@ -414,3 +419,60 @@ int Colony::verifyHotel(double cost, int i, int j)
         return j;
 
 }
+
+/**Incomplete**/
+void Colony::cheapestInsertion(Ant* ant)
+{
+    std::vector<int> tour = ant->getTour();
+    int num;
+    for(int i = 0; i < 3; ++i){
+        num = rand() % costumer_number + hotels_number;
+        if(find(tour.begin(), tour.end(), num) == tour.end()){
+            tour.push_back(num);
+        }
+    }
+
+    int count = 0;
+    auto bestPostion = tour.begin();
+    double bestDistance  = ULONG_MAX;
+    int i  = 0;
+    while(count < costumer_number - 3){
+        num = rand() % costumer_number + hotels_number;
+        i = 0;
+        bestDistance = ULONG_MAX;
+        bestPostion = tour.begin();
+        if(find(tour.begin(), tour.end(), num) == tour.end()){
+            for(auto it = tour.begin(); it != tour.end(); ++it){
+                if(i  == 0){
+                    if(edges[*it][num].distance + edges[num][tour.back()].distance - edges[*it][tour.back()].distance < bestDistance){
+                        bestDistance = edges[*it][num].distance + edges[num][tour.back()].distance - edges[*it][tour.back()].distance;
+                        bestPostion = it;
+                    }
+                }else if( i == tour.size() -1){
+                            if(edges[*it][num].distance + edges[num][tour.front()].distance - edges[*it][tour.front()].distance < bestDistance){
+                                bestDistance = edges[*it][num].distance + edges[num][tour.front()].distance - edges[*it][tour.front()].distance;
+                                bestPostion = it;
+                            }
+                    }else{
+                        if(edges[*it][num].distance + edges[num][*it+1].distance - edges[*it][*it+1].distance < bestDistance){
+                            bestDistance = edges[*it][num].distance + edges[num][*it+1].distance - edges[*it][*it+1].distance;
+                            bestPostion = it;
+                        }
+                    }
+
+
+
+             ++i;
+            }
+            tour.insert(bestPostion, num);
+            count++;
+        }
+
+    }
+
+    for(auto it = tour.begin(); it != tour.end(); ++it)
+        std::cout<<*it<<std::endl;
+    ant->setTour(tour);
+}
+
+
