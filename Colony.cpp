@@ -11,6 +11,8 @@
 #define phi 2
 #define alfa 0.8
 #define beta 0.2
+#define RUNS 10
+#define MAX_ITERATIONS_PER_SEED 1000
 Colony::Colony(int population_size)
 {
    readInstance();
@@ -48,6 +50,7 @@ Colony::Colony(int population_size)
     }
 
     firstConstruction();
+
 }
 
 Colony::~Colony()
@@ -112,7 +115,7 @@ void Colony::readInstance()
         }
         points[i] = node;
 
-        std::cout<<"node "<<i<<" X: "<<node->getX()<<" Y: "<<node->getY()<<std::endl;
+        //std::cout<<"node "<<i<<" X: "<<node->getX()<<" Y: "<<node->getY()<<std::endl;
 
     }
 
@@ -175,6 +178,9 @@ Ant* Colony::findBestAnt(){
         tour = ants[i]->getTour();
 
         for(int j = 0; j < tour.size() - 1; ++j){
+            if(j >= hotels_number){
+                sum+= points[j]->getDemand();
+            }
             sum+= edges[tour.at(j)][tour.at(j + 1)].distance;
         }
         ants[i]->setObjectiveFunction(sum);
@@ -183,6 +189,7 @@ Ant* Colony::findBestAnt(){
             bestAnt = ants[i];
         }
     }
+    bestSolutions.push_back(bestAnt->getObjectiveFunction());
     std::cout<<"Best SOlution: "<<bestAnt->getObjectiveFunction();
     return bestAnt;
 }
@@ -193,37 +200,45 @@ int Colony::chooseEdge(int i)
 
     std::list<int> l;
 
-    for(int j = 0; j < points_number; ++j){
-        if(!edges[i][j].visited && i != j && edges[i][j].distance != 0){
-            std::cout<<"parcial sum: "<<sum<<std::endl;
+    for(int j = hotels_number; j < points_number; ++j){
+        if(!edges[i][j].visited && i != j){
+            if(edges[i][j].distance == 0){
+                edges[i][j].visited = true;
+                edges[j][i].visited = true;
+                std::cout<<"baaaaiirl"<<std::endl;
+                return j;
+            }
+            //std::cout<<"parcial sum: "<<sum<<std::endl;
 
             sum += pow(pheromone[i][j], alfa) * pow(1/(edges[i][j].distance), beta);
         }
     }
-    std::cout<<"sum: "<<sum<<std::endl;
+    //std::cout<<"sum: "<<sum<<std::endl;
 
-    for(int j = 0; j < points_number; ++j){
+    for(int j = hotels_number; j < points_number; ++j){
+
         if(!edges[i][j].visited && i != j){
             edges[i][j].probability = pow(pheromone[i][j], alfa) * pow(1/(edges[i][j].distance), beta) / sum;
-            std::cout<<"Prob Edge ("<<i<<" "<<j<<") : "<<edges[i][j].probability<<std::endl;
+            //std::cout<<"Prob Edge ("<<i<<" "<<j<<") : "<<edges[i][j].probability<<std::endl;
 
             if(edges[i][j].probability != 0){
                 l.push_back(j);
-                std::cout<<j<<std::endl;
+                //std::cout<<j<<std::endl;
             }
         }
     }
     int number = rand()%10000;
     double index = 0;
     int j;
-    std::cout<<"number: "<<number<<std::endl;
+    //std::cout<<"number: "<<number<<std::endl;
     if(l.size() == 0) return 0;
     for(auto it = l.begin(); it != l.end(); ++it){
         j = *it;
         if(number >= index && number < ((edges[i][j].probability)*10000  + index)){
-            std::cout<<"biirl :"<<j<<std::endl;
+            //std::cout<<"biirl :"<<j<<std::endl;
             edges[i][j].visited = true;
             edges[j][i].visited = true;
+
             return j;
         }
         index += (edges[i][j].probability)*10000;
@@ -237,30 +252,70 @@ void Colony::firstConstruction(){
     int count = 0;
     vector<int> id;
     vector<pair<double,double>> coord;
-    for(int i = hn ; i < points_number; ++i){
-        id.push_back(i);
-        coord.push_back(make_pair(points[i]->getX(), points[i]->getY()));
+    srand(time(NULL));
+    for(int i = 0 ; i < costumer_number; ++i){
+        id.push_back(i + hotels_number);
+        coord.push_back(make_pair(costumers[i]->getX(), costumers[i]->getY()));
     }
     LKMatrix mat(coord, id);
     int currentNode = 0;
     for(int i = 0; i < population_size; ++i){
         currentNode = 0;
         current = ants[i];
-        /*count = 0;
-        current->getTour().push_back(0);
-        while(count < costumer_number){
-            currentNode = rand() % (costumer_number) + hotels_number;
-            if(find(current->getTour().begin(), current->getTour().end(), currentNode) == current->getTour().end()){
-                current->getTour().push_back(currentNode);
-                count++;
+        int cont = 0;
+        if(i == 0){
+        current->setTour(mat.optimizeTour());
+            for(auto it = ants[i]->getTour().begin(); it != ants[i]->getTour().end(); ++it){
+                *it = *it + hotels_number;
+
             }
-        }*/
+        }else{
+
+            count = 0;
+            current->getTour().push_back(0);
+            while(count < costumer_number){
+                currentNode = rand() % (costumer_number) + hotels_number;
+                if(find(current->getTour().begin(), current->getTour().end(), currentNode) == current->getTour().end()){
+                    current->getTour().push_back(currentNode);
+                    count++;
+                }
+            }
+        }
         //std::cout<<"ANT Number "<<i<<std::endl;
-        normalize(ants[i]);
+        //normalize(ants[i]);
+        for(int j = 0; j < ants[i]->getTour().size(); ++j)
+            std::cout<<ants[i]->getTour().at(j)<< " "<<std::endl;
     }
-    UpdatePheromone();
-    resetPaths();
-    constructSolution();
+    int runs = 10000;
+    int num = 0;
+    int iterations = 0;
+    while(num < RUNS){
+        srand(time(NULL) + num);
+        while(iterations < MAX_ITERATIONS_PER_SEED){
+            UpdatePheromone();
+            cleanEdges();
+            resetPaths();
+            constructSolution();
+            Ant* a = findBestAnt();
+            auto it = a->getTour().begin();
+            while(it != a->getTour().end()){
+                //std::cout <<*it<<std::endl;
+                ++it;
+            }
+            iterations++;
+        }
+
+        //resetPaths();
+        num++;
+    }
+    double best = *bestSolutions.begin() ;
+    for(auto it = bestSolutions.begin(); it != bestSolutions.end(); ++it ){
+        if( *it < best)
+            best = *it;
+    }
+
+    std::cout<<"best solution ever: "<<best<<std::endl;
+
 
 }
 
@@ -271,7 +326,7 @@ void Colony::constructSolution()
     int currentNode = 0;
     for(int i = 0; i < population_size; ++i){
         cleanEdges();
-        currentNode = 0;
+        currentNode = *ants[i]->getTour().begin();
         current = ants[i];
         count = 0;
         current->getTour().push_back(0);
@@ -284,6 +339,7 @@ void Colony::constructSolution()
         }
         //std::cout<<"ANT Number "<<i<<std::endl;
         normalize(ants[i]);
+        std::cout<<"ANT Nº "<<i<<std::endl;
     }
 }
 

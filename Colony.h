@@ -3,6 +3,7 @@
 #include "Ant.h"
 #include "Node.h"
 #include <list>
+#include <vector>
 class Colony{
     private:
         typedef struct prob{
@@ -19,6 +20,7 @@ class Colony{
         double limit;
         Edges** edges;
         double** pheromone;
+        std::vector<double> bestSolutions;
         Node** points;
         Node** hotels;
         Node** costumers;

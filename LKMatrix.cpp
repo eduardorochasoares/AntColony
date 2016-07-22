@@ -8,6 +8,7 @@
 #include <ctime>
 #include <sys/time.h>
 #include <stdio.h>
+#include <algorithm>
 #include <unistd.h>
 
 using namespace std;
@@ -28,11 +29,27 @@ LKMatrix::LKMatrix(vector<pair<double, double> > &coords, vector<int> &ids) {
 
   // initialize tour
   tour = vector<int>(size, 0);
+    std::cout<<ids.size()<<std::endl;
+  // initial 'random' tou
+    for(int i = 0; i < ids.size(); ++i);
+        //std::cout<<ids.at(i)<<std::endl;
+    int count = 0;
+    int currentNode;
+    for (int i = 0; i < size; i++) {
+        tour[i] = (i + 1) % size;
+    }
+    /*while(count < ids.size()){
+            currentNode = (rand() % size);
+            if(find(tour.begin(), tour.end(), ids[currentNode]) == tour.end()){
+               //std::cout<<currentNode<<endl;
+                tour.push_back(ids[currentNode]);
+                count++;
+            }
 
-  // initial 'random' tour
-  for (int i = 0; i < size; i++) {
-    tour[i] = (i + 1) % size;
-  }
+    }*/
+
+
+
 
   // sets the distanceVector
   edgeDistances = vector<vector<double> > (size, vector<double> (size, 0));
@@ -196,10 +213,11 @@ void LKMatrix::LKMove(int tourStart) {
 
   printTour();
   assert(isTour());
+  //std::cout<<"biiirl"<<std::endl;
 
 }
 
-void LKMatrix::optimizeTour() {
+vector<int> LKMatrix::optimizeTour() {
   // we need to test for convergence and also the difference from last time
   int diff;
   int old_distance = 0;
@@ -220,6 +238,7 @@ void LKMatrix::optimizeTour() {
     };
     old_distance = new_distance;
   }
+  return tour;
 }
 
 /*
@@ -244,6 +263,7 @@ void LKMatrix::reverse(int start, int end) {
 }
 
 // Sanity check function
+
 bool LKMatrix::isTour() {
   int count = 1;
   int start = tour[0];
@@ -255,10 +275,12 @@ bool LKMatrix::isTour() {
 }
 
 
+
+
 void LKMatrix::printTour() {
   int current = 0;
   do {
-    //cout << current << " ; ";
+    cout << current << " ; ";
     current = tour[current];
   } while (current != 0);
   //cout << endl;
@@ -266,8 +288,10 @@ void LKMatrix::printTour() {
 
 void LKMatrix::printTourIds() {
   int current = 0;
+
   do {
     cout << ids[current] << endl;
     current = tour[current];
   } while (current != 0);
+
 }

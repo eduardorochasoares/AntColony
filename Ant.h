@@ -13,6 +13,7 @@ class Ant{
       void setObjectiveFunction(double value);
       double getObjectiveFunction();
       void setPath(std::vector<int> path);
+      void setTour(std::vector<int> tour);
 
 
 

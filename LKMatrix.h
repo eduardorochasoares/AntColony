@@ -11,7 +11,7 @@ class LKMatrix {
     LKMatrix(vector<pair<double, double> > &coords, vector<int> &ids);
     vector<int> getCurrentTour();
     double getCurrentTourDistance();
-    void optimizeTour();
+    vector<int> optimizeTour();
     void printTour();
     void printTourIds();
 

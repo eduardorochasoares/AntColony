@@ -31,3 +31,8 @@ double Ant::getObjectiveFunction()
 void Ant::setPath(std::vector<int> path){
     this->tour = path;
 }
+
+void Ant::setTour(std::vector<int> tour)
+{
+    this->tour = tour;
+}
