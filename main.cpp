@@ -5,7 +5,7 @@
 #include "Colony.h"
 int main(){
 
-    Colony* c = new Colony(2);
+    Colony* c = new Colony(50);
 
     return 0;
 }

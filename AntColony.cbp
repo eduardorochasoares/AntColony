@@ -37,6 +37,8 @@
 		<Unit filename="Ant.h" />
 		<Unit filename="Colony.cpp" />
 		<Unit filename="Colony.h" />
+		<Unit filename="LKMatrix.cpp" />
+		<Unit filename="LKMatrix.h" />
 		<Unit filename="Node.cpp" />
 		<Unit filename="Node.h" />
 		<Unit filename="main.cpp" />

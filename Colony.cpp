@@ -8,11 +8,13 @@
 #include "LKMatrix.h"
 #define p 0.4
 #define mi 50
+#include <stdlib.h>
 #define phi 2
 #define alfa 0.8
+#include <time.h>
 #define beta 0.2
 #define RUNS 10
-#define MAX_ITERATIONS_PER_SEED 1000
+#define MAX_ITERATIONS_PER_SEED 100
 Colony::Colony(int population_size)
 {
    readInstance();
@@ -262,7 +264,12 @@ int Colony::chooseEdge(int i)
         }
         index += (edges[i][j].probability)*10000;
     }
-    return -1;
+    int num = rand() % points_number + hotels_number;
+    while(!edges[i][num].visited){
+        num = rand() % points_number;
+
+    }
+    return num;
 
 }
 
@@ -288,13 +295,14 @@ void Colony::firstConstruction(){
             current->setTour(mat.optimizeTour());
             for(int j = 0; j < ants[i]->getTour().size(); ++j){
                 aux.push_back(ants[i]->getTour().at(j) + hotels_number);
-                std::cout<<aux.at(j)<<" "<<std::endl;
+                //std::cout<<aux.at(j)<<" "<<std::endl;
             }
             ants[i]->setTour(aux);
 
 
+        }else if(i < 0.7*population_size){
+                cheapestInsertion(ants[i]);
         }else{
-
             count = 0;
             //current->getTour().push_back(0);
             while(count < costumer_number){
@@ -304,15 +312,18 @@ void Colony::firstConstruction(){
                     count++;
                 }
             }
-
         }
+
+
+
+        //}
 
         //std::cout<<"ANT Number "<<i<<std::endl;
         //normalize(ants[i]);
         //ants[i]->getTour().insert(ants[i]->getTour().begin(), 0);
         //normalize(ants[i]);
-        for(int j = 0; j < ants[i]->getTour().size(); ++j);
-            //std::cout<<ants[i]->getTour().at(j)<< " "<<std::endl;
+        for(int j = 0; j < ants[i]->getTour().size(); ++j)
+            std::cout<<ants[i]->getTour().at(j)<< " "<<std::endl;
 
 
     }
@@ -359,25 +370,24 @@ void Colony::constructSolution()
         cleanEdges();
         current = ants[i];
         count = 0;
-        int index = random() % costumer_number + hotels_number;
+        int index = rand() % costumer_number + hotels_number;
         current->getTour().push_back(index);
         currentNode = *ants[i]->getTour().begin();
 
-        while(count < costumer_number ){
+        while(count < costumer_number - 1){
             currentNode = chooseEdge(currentNode);
             if(currentNode == -1){
-                std::cout<<"Aaaaaaaa" <<std::endl;
                 break;
             }
             if(find(current->getTour().begin(), current->getTour().end(), currentNode) == current->getTour().end()){
                 current->getTour().push_back(currentNode);
-                std::cout<<" node : "<<currentNode<<std::endl;
+                //std::cout<<" node : "<<currentNode<<std::endl;
                 count++;
             }
         }
         //std::cout<<"ANT Number "<<i<<std::endl;
         normalize(ants[i]);
-        std::cout<<"ANT Nº "<<i<<std::endl;
+       // std::cout<<"ANT Nº "<<i<<std::endl;
     }
 }
 
@@ -502,9 +512,9 @@ void Colony::cheapestInsertion(Ant* ant)
         }
 
     }
-
+    //std::cout<<"cheapest"<<std::endl;
     for(auto it = tour.begin(); it != tour.end(); ++it)
-        std::cout<<*it<<std::endl;
+        //std::cout<<*it<<std::endl;
     ant->setTour(tour);
 }
 
