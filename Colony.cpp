@@ -128,12 +128,20 @@ void Colony::UpdatePheromone()
     std::vector<int> tour;
     tour = ant->getTour();
     //atualizacao de feromonio da formiga com melhor solução
-    for(int i = 0; i < tour.size() - 1; ++i){
+    for(int i = 0; i < tour.size(); ++i){
         //evapora o feromonio
-        pheromone[tour.at(i)][tour.at(i+1)] = pheromone[tour.at(i)][tour.at(i+1)] * (1 - p);
-        //deposita feromonio
-        pheromone[tour.at(i)][tour.at(i+1)] = pheromone[tour.at(i)][tour.at(i+1)] + mi* (1/ant->getObjectiveFunction());
-        pheromone[tour.at(i + 1)][tour.at(i)] = pheromone[tour.at(i)][tour.at(i+1)];
+        if(i == tour.size() - 1){
+            pheromone[tour.at(i)][tour.at(0)] = pheromone[tour.at(i)][tour.at(0)] * (1 - p);
+            //deposita feromonio
+            pheromone[tour.at(i)][tour.at(0)] = pheromone[tour.at(i)][tour.at(0)] + mi* (1/ant->getObjectiveFunction());
+            pheromone[tour.at(0)][tour.at(i)] = pheromone[tour.at(i)][tour.at(0)];
+
+        }else{
+            pheromone[tour.at(i)][tour.at(i+1)] = pheromone[tour.at(i)][tour.at(i+1)] * (1 - p);
+            //deposita feromonio
+            pheromone[tour.at(i)][tour.at(i+1)] = pheromone[tour.at(i)][tour.at(i+1)] + mi* (1/ant->getObjectiveFunction());
+            pheromone[tour.at(i + 1)][tour.at(i)] = pheromone[tour.at(i)][tour.at(i+1)];
+        }
     }
 
     //atualizacao de feromonio das demais formigas
@@ -141,13 +149,18 @@ void Colony::UpdatePheromone()
         if(ants[i] != ant){
             tour = ants[i]->getTour();
 
-            for(int j = 0; j < tour.size() - 1; ++j){
-
+            for(int j = 0; j < tour.size(); ++j){
+                if(j == tour.size()- 1){
+                    pheromone[tour.at(j)][tour.at(0)] = pheromone[tour.at(j)][tour.at(0)] * (1 - p)
+                        + phi*(1/ants[i]->getObjectiveFunction());
+                    pheromone[tour.at(0)][tour.at(j)] = pheromone[tour.at(j)][tour.at(0)];
+                }else{
                 //evaporação e deposito de feromonio a uma taxa menor
                 //std::cout<<j<<std::endl;
-                pheromone[tour.at(j)][tour.at(j+1)] = pheromone[tour.at(j)][tour.at(j+1)] * (1 - p)
-                    + phi*(1/ants[i]->getObjectiveFunction());
-                pheromone[tour.at(j+1)][tour.at(j)] = pheromone[tour.at(j)][tour.at(j+1)];
+                    pheromone[tour.at(j)][tour.at(j+1)] = pheromone[tour.at(j)][tour.at(j+1)] * (1 - p)
+                        + phi*(1/ants[i]->getObjectiveFunction());
+                    pheromone[tour.at(j+1)][tour.at(j)] = pheromone[tour.at(j)][tour.at(j+1)];
+                }
             }
         }
     }
@@ -195,6 +208,10 @@ Ant* Colony::findBestAnt(){
     }
     bestSolutions.push_back(bestAnt->getObjectiveFunction());
     std::cout<<"Best Solution: "<<bestAnt->getObjectiveFunction()<<std::endl;
+    for(auto it = bestAnt->getTour().begin(); it != bestAnt->getTour().end(); ++it){
+        bestTour.push_back(*it);
+        std::cout<<*it <<" "<<std::endl;
+    }
     return bestAnt;
 }
 
@@ -252,7 +269,9 @@ int Colony::chooseEdge(int i)
 void Colony::firstConstruction(){
     Ant* current;
     int count = 0;
+    vector<int> aux;
     vector<int> id;
+    int index = 0;
     vector<pair<double,double>> coord;
     srand(time(NULL));
     for(int i = 0 ; i < costumer_number; ++i){
@@ -266,15 +285,18 @@ void Colony::firstConstruction(){
         current = ants[i];
 
         if(i == 0){
-        current->setTour(mat.optimizeTour());
-            for(auto it = ants[i]->getTour().begin(); it != ants[i]->getTour().end(); ++it){
-                *it = *it + hotels_number;
-
+            current->setTour(mat.optimizeTour());
+            for(int j = 0; j < ants[i]->getTour().size(); ++j){
+                aux.push_back(ants[i]->getTour().at(j) + hotels_number);
+                std::cout<<aux.at(j)<<" "<<std::endl;
             }
+            ants[i]->setTour(aux);
+
+
         }else{
 
             count = 0;
-            current->getTour().push_back(0);
+            //current->getTour().push_back(0);
             while(count < costumer_number){
                 currentNode = rand() % (costumer_number) + hotels_number;
                 if(find(current->getTour().begin(), current->getTour().end(), currentNode) == current->getTour().end()){
@@ -287,8 +309,12 @@ void Colony::firstConstruction(){
 
         //std::cout<<"ANT Number "<<i<<std::endl;
         //normalize(ants[i]);
-        for(int j = 0; j < ants[i]->getTour().size(); ++j)
-            std::cout<<ants[i]->getTour().at(j)<< " "<<std::endl;
+        //ants[i]->getTour().insert(ants[i]->getTour().begin(), 0);
+        //normalize(ants[i]);
+        for(int j = 0; j < ants[i]->getTour().size(); ++j);
+            //std::cout<<ants[i]->getTour().at(j)<< " "<<std::endl;
+
+
     }
     //cheapestInsertion(ants[1]);
 
@@ -331,14 +357,21 @@ void Colony::constructSolution()
     int currentNode = 0;
     for(int i = 0; i < population_size; ++i){
         cleanEdges();
-        currentNode = *ants[i]->getTour().begin();
         current = ants[i];
         count = 0;
-        current->getTour().push_back(0);
-        while(count < costumer_number){
+        int index = random() % costumer_number + hotels_number;
+        current->getTour().push_back(index);
+        currentNode = *ants[i]->getTour().begin();
+
+        while(count < costumer_number ){
             currentNode = chooseEdge(currentNode);
+            if(currentNode == -1){
+                std::cout<<"Aaaaaaaa" <<std::endl;
+                break;
+            }
             if(find(current->getTour().begin(), current->getTour().end(), currentNode) == current->getTour().end()){
                 current->getTour().push_back(currentNode);
+                std::cout<<" node : "<<currentNode<<std::endl;
                 count++;
             }
         }
@@ -358,10 +391,10 @@ void Colony::normalize(Ant* ant){
     hSolution.push_back(*ant->getTour().begin());
 
     int  i = 0;
-    while (i < ant->getTour().size() -2){
+    while (i < ant->getTour().size() -1){
         current = verifyHotel(cost, current, ant->getTour().at(i+1));
-        if(current == ant->getTour().at(i))
-            return;
+        /*if(current == ant->getTour().at(i))
+            return;*/
 
         if(current < hotels_number)
             cost = 0;

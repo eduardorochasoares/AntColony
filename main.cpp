@@ -1,11 +1,11 @@
 #include <fstream>
 #include "Node.h"
 #include <time.h>
-#include "Colony.h"
 #include <stdlib.h>
+#include "Colony.h"
 int main(){
-
-    Colony* c = new Colony(50);
+
+    Colony* c = new Colony(2);
 
     return 0;
 }

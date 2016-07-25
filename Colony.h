@@ -15,6 +15,7 @@ class Colony{
         Ant** ants;
         int population_size;
         int hotels_number;
+        std::vector<int> bestTour;
         int costumer_number;
         int points_number;
         double limit;
