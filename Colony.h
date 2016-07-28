@@ -39,7 +39,14 @@ class Colony{
         void firstConstruction();
         void constructSolution();
         void cheapestInsertion(Ant* ant);
-
+        double functionValue(Ant* ant);
+        bool checkSolution(Ant* ant);
+        void twoOpt(Ant *ant);
+        void twoOptInter(Ant *ant);
+        std::vector<int> threeOpt(Ant *ant);
+        std::vector<int> changeHotels(Ant *ant);
+        std::vector<int> exchange(Ant *ant);
+        void localSearch(Ant *ant);
 };
 
 

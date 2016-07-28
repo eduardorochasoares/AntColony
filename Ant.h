@@ -14,9 +14,7 @@ class Ant{
       double getObjectiveFunction();
       void setPath(std::vector<int> path);
       void setTour(std::vector<int> tour);
-
-
-
+      std::vector<std::vector<int>> breakTrips(int hotel_numbers);
 
 };
 #endif // ANT_H_INCLUDED

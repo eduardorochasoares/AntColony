@@ -14,7 +14,7 @@
 #include <time.h>
 #define beta 0.2
 #define RUNS 10
-#define MAX_ITERATIONS_PER_SEED 100
+#define MAX_ITERATIONS_PER_SEED 10
 Colony::Colony(int population_size)
 {
    readInstance();
@@ -50,9 +50,7 @@ Colony::Colony(int population_size)
         }
         //std::cout<<"\n";
     }
-
     firstConstruction();
-
 }
 
 Colony::~Colony()
@@ -182,9 +180,16 @@ Ant* Colony::findBestAnt(){
     double best;
     Ant* bestAnt;
     tour = ants[0]->getTour();
-    for(int i = 0; i < tour.size() - 1; ++i){
-        sum += edges[tour.at(i)][tour.at(i + 1)].distance;
+    for(int j = 0; j < tour.size() ; ++j){
+         if(tour[j] >= hotels_number){
+                sum+= points[j]->getDemand();
+          }
+          if(j < tour.size() - 1)
+                sum+= edges[tour.at(j)][tour.at(j + 1)].distance;
+            else
+                sum+= edges[tour.at(0)][tour.at(j)].distance;
     }
+
     best = sum;
     bestAnt = ants[0];
 
@@ -315,9 +320,9 @@ void Colony::firstConstruction(){
         }
 
 
-
+        normalize(ants[i]);
         //}
-
+        twoOpt(ants[i]);
         //std::cout<<"ANT Number "<<i<<std::endl;
         //normalize(ants[i]);
         //ants[i]->getTour().insert(ants[i]->getTour().begin(), 0);
@@ -355,8 +360,9 @@ void Colony::firstConstruction(){
         if( *it < best)
             best = *it;
     }
-
-    std::cout<<"best solution ever: "<<best<<std::endl;
+    std::cout<<std::endl;
+    std::cout<<std::endl;
+    std::cout<<"Best Solution Ever: "<<best<<std::endl;
 
 
 }
@@ -372,7 +378,7 @@ void Colony::constructSolution()
         count = 0;
         int index = rand() % costumer_number + hotels_number;
         current->getTour().push_back(index);
-        currentNode = *ants[i]->getTour().begin();
+        currentNode = 0;
 
         while(count < costumer_number - 1){
             currentNode = chooseEdge(currentNode);
@@ -385,8 +391,10 @@ void Colony::constructSolution()
                 count++;
             }
         }
+
         //std::cout<<"ANT Number "<<i<<std::endl;
         normalize(ants[i]);
+        twoOpt(ants[i]);
        // std::cout<<"ANT Nº "<<i<<std::endl;
     }
 }
@@ -398,11 +406,11 @@ void Colony::normalize(Ant* ant){
     double cost = 0;
     int count = 0;
 
-    hSolution.push_back(*ant->getTour().begin());
+    hSolution.push_back(0);
 
     int  i = 0;
-    while (i < ant->getTour().size() -1){
-        current = verifyHotel(cost, current, ant->getTour().at(i+1));
+    while (i < ant->getTour().size()){
+        current = verifyHotel(cost, current, ant->getTour().at(i));
         /*if(current == ant->getTour().at(i))
             return;*/
 
@@ -463,7 +471,6 @@ int Colony::verifyHotel(double cost, int i, int j)
 
 }
 
-/**Incomplete**/
 void Colony::cheapestInsertion(Ant* ant)
 {
     std::vector<int> tour = ant->getTour();
@@ -516,6 +523,268 @@ void Colony::cheapestInsertion(Ant* ant)
     for(auto it = tour.begin(); it != tour.end(); ++it)
         //std::cout<<*it<<std::endl;
     ant->setTour(tour);
+}
+
+void Colony::twoOpt(Ant *ant) { //intratrip
+    std::vector<std::vector<int>> matrixTrips = ant->breakTrips(hotels_number);
+    std::vector<int> tour = ant->getTour();
+    std::vector<int> initialTour = tour;
+    std::vector<int> aux;
+    std::vector<int> aux2;
+    Ant *auxA = new Ant();
+    int improve = 0;
+    int maxIter = 20;
+
+    for(int i = 0; i < matrixTrips.size(); i++) {
+        aux.clear();
+        for(int k = 2; k < matrixTrips[i].size()-1;k++){
+            aux.push_back(matrixTrips[i][k]);
+        }
+        for(int a = 0; a < aux.size()-1; a++) {
+            for(int b = a+1; b < aux.size(); b++){
+                aux2.clear();
+                for(int c = 0; c < a; c++)
+                    aux2.push_back(aux[c]);
+                int rev = 0;
+                for(int c = a; c <= b; c++){
+                    aux2.push_back(aux[b-rev]);
+                    rev++;
+                }
+                for(int c = b+1; c < aux.size(); c++)
+                    aux2.push_back(aux[c]);
+
+                int l = 0;
+                int j = (matrixTrips[i][0]+1) % tour.size();
+                while(l < aux2.size()){
+                    tour[j] = aux2[l];
+                    l++;
+                    j = (j+1) % tour.size();
+                }
+                auxA->setTour(tour);
+                if(functionValue(auxA)<functionValue(ant)){
+                        ant->setTour(tour);
+                        matrixTrips = ant->breakTrips(hotels_number);
+                        aux.clear();
+                        for(int k = 2; k < matrixTrips[i].size()-1;k++){
+                                aux.push_back(matrixTrips[i][k]);
+                        }
+                        improve = 0;
+                }
+                tour = ant->getTour();
+            }
+        }
+        improve++;
+        if(improve > maxIter)
+            break;
+    }
+    delete auxA;
+    if(!checkSolution(ant)){
+        ant->setTour(initialTour);
+    }
+}
+
+void Colony::twoOptInter(Ant *ant) {
+    std::vector<int> tour = ant->getTour();
+    std::vector<int> initialTour = tour;
+    std::vector<int> aux;
+    Ant *auxA = new Ant();
+    int improve = 0;
+    int maxIter = 20;
+
+    while(improve < maxIter) {
+        for(int a = 0; a < tour.size()-1; a++) {
+            for(int b = a+1; b < tour.size(); b++){
+                aux.clear();
+                for(int c = 0; c < a; c++)
+                    aux.push_back(tour[c]);
+                int rev = 0;
+                for(int c = a; c <= b; c++){
+                    aux.push_back(tour[b-rev]);
+                    rev++;
+                }
+                for(int c = b+1; c < tour.size(); c++)
+                    aux.push_back(tour[c]);
+                tour = aux;
+                auxA->setTour(tour);
+                if(functionValue(auxA)<functionValue(ant)){
+                        ant->setTour(tour);
+                        improve = 0;
+                }
+                tour = ant->getTour();
+            }
+        }
+        improve++;
+    }
+    delete auxA;
+    if(!checkSolution(ant)){
+        ant->setTour(initialTour);
+    }
+}
+
+std::vector<int> Colony::threeOpt(Ant *ant) {
+
+
+
+}
+
+std::vector<int> Colony::changeHotels(Ant *ant) {
+
+    std::vector<int> tour = ant->getTour();
+    Ant *aux = new Ant();
+    double mim = ULONG_MAX;
+    double value = 0;
+    int pos = 0;
+    int hotel = 0;
+    int change = 0;
+    for(int i = 0; i < tour.size(); i++) {
+        if(tour[i] < hotels_number){
+            for(int j = 0; j < hotels_number; j++) {
+                if(tour[i] != j){
+                    change = tour[i];
+                    tour[i] = j;
+                    aux->setTour(tour);
+                    if(checkSolution(aux)){
+                        value = 0;
+                        value = functionValue(aux);
+                        if(value < mim){
+                            mim = value;
+                            pos = i;
+                            hotel = j;
+                        }
+                    }
+                    tour[i] = change;
+                    aux->setTour(tour);
+                }
+            }
+        }
+    }
+    delete aux;
+    if(mim < functionValue(ant)){
+        tour[pos] = hotel;
+        return tour;
+    }
+    return ant->getTour();
+}
+
+std::vector<int> Colony::exchange(Ant *ant) {
+    std::vector<std::vector<int>> matrixTrips = ant->breakTrips(hotels_number);
+    std::vector<int> tour = ant->getTour();
+    std::vector<int> aux;
+    std::vector<int> bestRoute;
+    Ant *auxA = new Ant();
+    int m = 3;
+    int k = 2;
+    int l;
+    double mim = ULONG_MAX;
+    double value;
+    while(m > 0) {
+        for(int i = 0; i < matrixTrips.size()-1; i++){
+            if(matrixTrips[i].size()-3 >= m){
+                for(int j = i+1; j < matrixTrips.size(); j++){
+                    if(matrixTrips[j].size()-3 >= m) {
+                        k = 2;
+                        while(k+m-1<matrixTrips[i].size()-1) {
+                            aux.clear();
+                            for(int a = k; a < k+m; a++) {
+                                aux.push_back(matrixTrips[i][a]);
+                            }
+                            l = 2;
+                            while(l+m-1 < matrixTrips[j].size()-1){
+                                int n = 0;
+                                int index2 = matrixTrips[j][0]+l-1 % tour.size();
+                                int index = matrixTrips[i][0]+k-1 % tour.size();
+                                while(n < m){
+                                    tour[index] = tour[index2];
+                                    tour[index2] = aux[n];
+                                    index = (index+1) % tour.size();
+                                    index2 = (index2+1) % tour.size();
+                                    n++;
+                                }
+                                auxA->setTour(tour);
+                                if(checkSolution(auxA)){
+                                    value = 0;
+                                    value = functionValue(auxA);
+                                    if(value < mim){
+                                        bestRoute = tour;
+                                        mim = value;
+                                    }
+                                }
+                                tour = ant->getTour();
+                                l++;
+                            }
+                            k++;
+                        }
+                    }
+                }
+            }
+        }
+        m--;
+    }
+    delete auxA;
+    if(mim < functionValue(ant)){
+        return bestRoute;
+    }
+    return ant->getTour();
+}
+
+bool Colony::checkSolution(Ant *ant) {
+    std::vector<int> tour = ant->getTour();
+    double sum = 0;
+    int j = 0;
+
+    while(tour[j] >= hotels_number)
+        j++;
+
+    int i = (j == tour.size()-1)?0:j+1;
+    int k = j;
+    while(i != k) {
+        sum = 0;
+        while (tour[i] >= hotels_number){
+            sum += edges[tour[j]][tour[i]].distance + points[tour[i]]->getDemand();
+            //std::cout << tour[j] << "-" << tour[i] << "/" << points[tour[i]]->getDemand() << "/" << edges[tour[j]][tour[i]].distance << "/" << edges[tour[j]][tour[i]].distance + points[tour[i]]->getDemand() << std::endl;
+            j = i;
+            i = (j == tour.size()-1)?0:j+1;
+        }
+        sum += edges[tour[j]][tour[i]].distance;
+        //std::cout << tour[j] << "-" << tour[i] << "/" << points[tour[i]]->getDemand() << "/" << edges[tour[j]][tour[i]].distance << "/" << edges[tour[j]][tour[i]].distance + points[tour[i]]->getDemand() << std::endl;
+        if(sum > limit) {
+            return false;
+        }
+        if(i != k) {
+            j = i;
+            i = (j == tour.size()-1)?0:j+1;
+        }
+    }
+    return true;
+}
+
+double Colony::functionValue(Ant* ant){
+
+    std::vector<int> tour = ant->getTour();
+    int j = 0;
+    int days = 0;
+    double sum = 0;
+
+    //Acha o primeiro hotel
+    while(tour[j] >= hotels_number)
+        j++;
+
+    int i = (j == tour.size()-1)?0:j+1;
+    int k = j;
+    while(i != k) {
+        days++;
+        while (tour[i] >= hotels_number){
+            sum += edges[tour[j]][tour[i]].distance + points[tour[i]]->getDemand();
+            j = i;
+            i = (j == tour.size()-1)?0:j+1;
+        }
+        sum += edges[tour[j]][tour[i]].distance;
+        if(i != k) {
+            j = i;
+            i = (j == tour.size()-1)?0:j+1;
+        }
+    }
+    return sum;
 }
 
 
