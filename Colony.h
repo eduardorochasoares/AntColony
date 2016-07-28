@@ -47,6 +47,7 @@ class Colony{
         std::vector<int> changeHotels(Ant *ant);
         std::vector<int> exchange(Ant *ant);
         void localSearch(Ant *ant);
+        void vnd(Ant* ant);
 };
 
 

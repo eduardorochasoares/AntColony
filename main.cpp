@@ -6,7 +6,7 @@
 #include "Ant.h"
 int main(){
 
-    Colony* c = new Colony(50);
+    Colony* c = new Colony(5);
 
     return 0;
 }
